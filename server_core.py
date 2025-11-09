@@ -10,9 +10,8 @@ from dotenv import load_dotenv
 # ==========================================
 load_dotenv()
 
-# Secrets または .env からキーを取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # gpt-5-mini は未対応の環境あり
 
 # OpenAI クライアント初期化
 if not OPENAI_API_KEY:
@@ -38,7 +37,7 @@ def transcribe_audio(audio_path: Path) -> str:
 
 
 # ==========================================
-# 🧠 GPTによる議事録要約
+# 🧠 GPT による議事録要約
 # ==========================================
 def summarize_with_llm(text: str, prompt_key: str = "default") -> str:
     """ChatGPT (OpenAI API) で自然な議事録を生成"""
@@ -58,15 +57,17 @@ def summarize_with_llm(text: str, prompt_key: str = "default") -> str:
 
     system_prompt = prompts.get(prompt_key, prompts["default"])
 
-    response = client.responses.create(
+    # ✅ 新SDK（v1.x系）では responses ではなく chat.completions を使う！
+    response = client.chat.completions.create(
         model=OPENAI_MODEL,
-        input=[
+        messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": text},
         ],
+        temperature=0.4,
     )
 
-    summary = response.output_text
+    summary = response.choices[0].message.content
     return summary
 
 
